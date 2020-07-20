@@ -1,8 +1,8 @@
 diff --git a/content/browser/child_process_security_policy_impl.cc b/content/browser/child_process_security_policy_impl.cc
-index bcd42e788019..a728123a1f31 100644
+index c2b7778788b3..f7696308446e 100644
 --- a/content/browser/child_process_security_policy_impl.cc
 +++ b/content/browser/child_process_security_policy_impl.cc
-@@ -1452,6 +1452,15 @@ bool ChildProcessSecurityPolicyImpl::CanAccessDataForOrigin(
+@@ -1477,6 +1477,15 @@ bool ChildProcessSecurityPolicyImpl::CanAccessDataForOrigin(
  
      GURL actual_process_lock = security_state->origin_lock();
      if (!actual_process_lock.is_empty()) {

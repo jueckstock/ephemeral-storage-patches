@@ -1,22 +1,25 @@
 diff --git a/content/browser/frame_host/frame_tree_node.h b/content/browser/frame_host/frame_tree_node.h
-index 89ba68e856e9..327a1c6fd0ff 100644
+index 6df7a88eb743..35e6ffafdb02 100644
 --- a/content/browser/frame_host/frame_tree_node.h
 +++ b/content/browser/frame_host/frame_tree_node.h
-@@ -112,6 +112,13 @@ class CONTENT_EXPORT FrameTreeNode {
+@@ -116,6 +116,16 @@ class CONTENT_EXPORT FrameTreeNode {
      return devtools_frame_token_;
    }
  
++  // ESP: get stored navigation token
 +  const base::Optional<base::UnguessableToken>& GetNavigationToken() const {
 +    return devtools_navigation_token_;
 +  }
++  // ESP: set stored navigation token
 +  void SetNavigationToken(const base::UnguessableToken& navigation_token) {
 +    devtools_navigation_token_ = base::make_optional(navigation_token);
 +  }
 +
++
    size_t child_count() const { return current_frame_host()->child_count(); }
  
    unsigned int depth() const { return depth_; }
-@@ -521,6 +528,10 @@ class CONTENT_EXPORT FrameTreeNode {
+@@ -514,6 +524,10 @@ class CONTENT_EXPORT FrameTreeNode {
    // to look up the FrameTreeNode instance.
    base::UnguessableToken devtools_frame_token_;
  
@@ -24,6 +27,6 @@ index 89ba68e856e9..327a1c6fd0ff 100644
 +  // (used only to track main-frame navigations for our top-level-document-lifespan keying)
 +  base::Optional<base::UnguessableToken> devtools_navigation_token_;
 +
-   // A token tracking the embedding relationship between a out-of-process
-   // frames. This is only accessible by the renderer for the active
-   // RenderFrameHost and the renderer for the RenderFrameProxyHost from
+   // Tracks the scrolling and margin properties for this frame.  These
+   // properties affect the child renderer but are stored on its parent's
+   // frame element.  When this frame's parent dynamically updates these

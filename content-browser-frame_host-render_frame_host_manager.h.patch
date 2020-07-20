@@ -1,0 +1,13 @@
+diff --git a/content/browser/frame_host/render_frame_host_manager.h b/content/browser/frame_host/render_frame_host_manager.h
+index a7fa84f147d2..c579906c3c57 100644
+--- a/content/browser/frame_host/render_frame_host_manager.h
++++ b/content/browser/frame_host/render_frame_host_manager.h
+@@ -480,7 +480,7 @@ class CONTENT_EXPORT RenderFrameHostManager
+   // GetProcess() is called on the SiteInstance. In particular, calling this
+   // function will never lead to a process being created for the navigation.
+   scoped_refptr<SiteInstance> GetSiteInstanceForNavigationRequest(
+-      NavigationRequest* navigation_request);
++      NavigationRequest* navigation_request, const GURL* alt_site = nullptr /* ESP: split-key site URL option for isolated frames */);
+ 
+   // Helper to initialize the current RenderFrame if it's not initialized.
+   // TODO(https://crbug.com/1006814): Remove this. For now debug URLs and

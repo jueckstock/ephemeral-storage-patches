@@ -1,5 +1,5 @@
 diff --git a/content/browser/frame_host/render_frame_host_manager.cc b/content/browser/frame_host/render_frame_host_manager.cc
-index 73050ff98a79..a6e1cf3d0bc0 100644
+index 73050ff98a79..94ae7bcffd85 100644
 --- a/content/browser/frame_host/render_frame_host_manager.cc
 +++ b/content/browser/frame_host/render_frame_host_manager.cc
 @@ -812,8 +812,69 @@ RenderFrameHostImpl* RenderFrameHostManager::GetFrameHostForNavigation(
@@ -27,7 +27,7 @@ index 73050ff98a79..a6e1cf3d0bc0 100644
 +      root_site = SiteInstance::GetSiteForURL(browser_context, root_rfh->GetLastCommittedURL());
 +    }
 +    GURL new_site = SiteInstance::GetSiteForURL(browser_context, request->GetURL());
-+    if (new_site != root_site) {
++    if ((new_site != root_site) && new_site.SchemeIsHTTPOrHTTPS()) {
 +      // /*
 +      // policy: isolation keyed to lifetime-of-root-document-instance
 +      auto nav_token = root->GetNavigationToken();

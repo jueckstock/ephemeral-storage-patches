@@ -1,0 +1,16 @@
+diff --git a/content/browser/site_instance_impl.cc b/content/browser/site_instance_impl.cc
+index 91ae83aaf6ad..ee595a8938b1 100644
+--- a/content/browser/site_instance_impl.cc
++++ b/content/browser/site_instance_impl.cc
+@@ -798,6 +798,11 @@ GURL SiteInstanceImpl::GetSiteForURLInternal(
+     const GURL& real_url,
+     bool should_use_effective_urls,
+     bool allow_default_site_url) {
++  
++  // ESP: if this URL is in fact already an esp--- prefixed site URL, return it as-is
++  if (real_url.host().compare(0, 6, "esp---") == 0)
++    return real_url;
++
+   // Explicitly group chrome-error: URLs based on their host component.
+   // These URLs are special because we want to group them like other URLs
+   // with a host even though they are considered "no access" and

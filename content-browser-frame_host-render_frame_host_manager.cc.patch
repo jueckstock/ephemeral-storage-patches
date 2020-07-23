@@ -1,5 +1,5 @@
 diff --git a/content/browser/frame_host/render_frame_host_manager.cc b/content/browser/frame_host/render_frame_host_manager.cc
-index 73050ff98a79..4b4060a19379 100644
+index 73050ff98a79..ec9c3602275a 100644
 --- a/content/browser/frame_host/render_frame_host_manager.cc
 +++ b/content/browser/frame_host/render_frame_host_manager.cc
 @@ -812,8 +812,78 @@ RenderFrameHostImpl* RenderFrameHostManager::GetFrameHostForNavigation(
@@ -29,7 +29,7 @@ index 73050ff98a79..4b4060a19379 100644
 +    GURL new_site = SiteInstance::GetSiteForURL(browser_context, request->GetURL());
 +
 +    auto* policy = ChildProcessSecurityPolicyImpl::GetInstance();
-+    bool is_isolated_origin = policy->IsIsolatedOrigin(IsolationContext(browser_context), url::Origin::Create(new_site));
++    bool is_isolated_origin = policy->IsIsolatedOrigin(IsolationContext(browser_context), url::Origin::Create(request->GetURL()));
 +
 +    // push the frame's content into ephemeral/partitioned storage IFF
 +    // (a) it's not already a specially-isolated origin [not a public thing, but supported in Chrome and in its unit tests]

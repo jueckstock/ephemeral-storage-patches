@@ -1,8 +1,8 @@
 diff --git a/content/browser/frame_host/frame_tree_node.h b/content/browser/frame_host/frame_tree_node.h
-index 6df7a88eb743..35e6ffafdb02 100644
+index 89ba68e856e9..370a0c8744c5 100644
 --- a/content/browser/frame_host/frame_tree_node.h
 +++ b/content/browser/frame_host/frame_tree_node.h
-@@ -116,6 +116,16 @@ class CONTENT_EXPORT FrameTreeNode {
+@@ -112,6 +112,16 @@ class CONTENT_EXPORT FrameTreeNode {
      return devtools_frame_token_;
    }
  
@@ -19,9 +19,9 @@ index 6df7a88eb743..35e6ffafdb02 100644
    size_t child_count() const { return current_frame_host()->child_count(); }
  
    unsigned int depth() const { return depth_; }
-@@ -514,6 +524,10 @@ class CONTENT_EXPORT FrameTreeNode {
-   // to look up the FrameTreeNode instance.
-   base::UnguessableToken devtools_frame_token_;
+@@ -528,6 +538,10 @@ class CONTENT_EXPORT FrameTreeNode {
+   // if the frame is embedded in a parent frame.
+   base::Optional<base::UnguessableToken> embedding_token_;
  
 +  // ESP: stash of the last navigation token committed for this frame node
 +  // (used only to track main-frame navigations for our top-level-document-lifespan keying)

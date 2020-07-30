@@ -1,33 +1,22 @@
 diff --git a/content/browser/child_process_security_policy_impl.cc b/content/browser/child_process_security_policy_impl.cc
-index c2b7778788b3..30553664229d 100644
+index bcd42e788019..4a67f0abf60c 100644
 --- a/content/browser/child_process_security_policy_impl.cc
 +++ b/content/browser/child_process_security_policy_impl.cc
-@@ -1477,6 +1477,15 @@ bool ChildProcessSecurityPolicyImpl::CanAccessDataForOrigin(
+@@ -1452,6 +1452,17 @@ bool ChildProcessSecurityPolicyImpl::CanAccessDataForOrigin(
  
      GURL actual_process_lock = security_state->origin_lock();
      if (!actual_process_lock.is_empty()) {
 +      // ESP: check for and remove ephemeral context ID from the site hostname before doing checks
-+      auto lock_host = actual_process_lock.host();
-+      if (lock_host.compare(0, 6, "esp---") == 0) {
-+        auto unlocked_host = lock_host.substr(41);
-+        GURL::Replacements reps;
-+        reps.SetHostStr(unlocked_host);
-+        actual_process_lock = actual_process_lock.ReplaceComponents(reps);
++      if (base::CommandLine::ForCurrentProcess()->HasSwitch("ephemeral-frame-storage")) {
++        auto lock_host = actual_process_lock.host();
++        if (lock_host.compare(0, 6, "esp---") == 0) {
++          auto unlocked_host = lock_host.substr(41);
++          GURL::Replacements reps;
++          reps.SetHostStr(unlocked_host);
++          actual_process_lock = actual_process_lock.ReplaceComponents(reps);
++        }
 +      }
 +
        // Jail-style enforcement - a process with a lock can only access data
        // from origins that require exactly the same lock.
        if (actual_process_lock == expected_process_lock)
-@@ -1497,6 +1506,12 @@ bool ChildProcessSecurityPolicyImpl::CanAccessDataForOrigin(
-       }
- 
-       failure_reason = "lock_mismatch";
-+
-+      auto tmp1 = actual_process_lock.spec();
-+      auto* tmp2 = tmp1.c_str();
-+      auto tmp3 = expected_process_lock.spec();
-+      auto* tmp4 = tmp3.c_str();
-+      fprintf(stderr, "\n*** LOCK MISMATCH: %s != %s\n", tmp2, tmp4);
-     } else {
-       // Citadel-style enforcement - an unlocked process should not be able to
-       // access data from origins that require a lock.

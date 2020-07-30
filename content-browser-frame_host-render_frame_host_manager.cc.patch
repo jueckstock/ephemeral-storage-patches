@@ -1,8 +1,8 @@
 diff --git a/content/browser/frame_host/render_frame_host_manager.cc b/content/browser/frame_host/render_frame_host_manager.cc
-index 73050ff98a79..ec9c3602275a 100644
+index 4c370c23a221..b0be03f62463 100644
 --- a/content/browser/frame_host/render_frame_host_manager.cc
 +++ b/content/browser/frame_host/render_frame_host_manager.cc
-@@ -812,8 +812,78 @@ RenderFrameHostImpl* RenderFrameHostManager::GetFrameHostForNavigation(
+@@ -808,8 +808,68 @@ RenderFrameHostImpl* RenderFrameHostManager::GetFrameHostForNavigation(
    // First compute the SiteInstance to use for the navigation.
    SiteInstance* current_site_instance = render_frame_host_->GetSiteInstance();
    BrowserContext* browser_context = current_site_instance->GetBrowserContext();
@@ -16,63 +16,53 @@ index 73050ff98a79..ec9c3602275a 100644
 +  // ESP: detect if this is a 3rd-party-site subframe being navigated; if so,
 +  // shunt it into an isolated SiteInstance using the root-document's navigation token
 +  // as the isolation key
-+  auto* tree = frame_tree_node_->frame_tree();
-+  auto* root = tree->root();
 +  GURL alt_site;
-+  DCHECK(root->IsMainFrame());
-+  if (root != frame_tree_node_) {
-+    auto* root_rfh = root->current_frame_host();
-+    GURL root_site;
-+    if (root_rfh) {
-+      root_site = SiteInstance::GetSiteForURL(browser_context, root_rfh->GetLastCommittedURL());
-+    }
-+    GURL new_site = SiteInstance::GetSiteForURL(browser_context, request->GetURL());
++  if (base::CommandLine::ForCurrentProcess()->HasSwitch("ephemeral-frame-storage")) {
++    auto* tree = frame_tree_node_->frame_tree();
++    auto* root = tree->root();
++    DCHECK(root->IsMainFrame());
++    if (root != frame_tree_node_) {
++      auto* root_rfh = root->current_frame_host();
++      GURL root_site;
++      if (root_rfh) {
++        root_site = SiteInstance::GetSiteForURL(browser_context, root_rfh->GetLastCommittedURL());
++      }
++      GURL new_site = SiteInstance::GetSiteForURL(browser_context, request->GetURL());
 +
-+    auto* policy = ChildProcessSecurityPolicyImpl::GetInstance();
-+    bool is_isolated_origin = policy->IsIsolatedOrigin(IsolationContext(browser_context), url::Origin::Create(request->GetURL()));
++      auto* policy = ChildProcessSecurityPolicyImpl::GetInstance();
++      bool is_isolated_origin = policy->IsIsolatedOrigin(IsolationContext(browser_context), url::Origin::Create(request->GetURL()));
 +
-+    // push the frame's content into ephemeral/partitioned storage IFF
-+    // (a) it's not already a specially-isolated origin [not a public thing, but supported in Chrome and in its unit tests]
-+    // (b) its site URL differs from the root frame's last committed site URL
-+    // (c) its site URL has an HTTP[S] scheme (i.e., a real remote HTTP resource/document)
-+    // (d) its host is not a raw IP address [because our decoration scheme is broken by IP address origins :-( ]
-+    if (!is_isolated_origin && (new_site != root_site) && new_site.SchemeIsHTTPOrHTTPS() && !new_site.HostIsIPAddress()) {
-+      // /*
-+      // policy: isolation keyed to lifetime-of-root-document-instance
-+      auto nav_token = root->GetNavigationToken();
-+      if (nav_token.has_value()) {
-+        GURL::Replacements reps;
-+        std::string alt_site_buffer{"esp---"};
-+        alt_site_buffer += nav_token.value().ToString();
-+        alt_site_buffer += "---";
-+        alt_site_buffer += new_site.host();
-+        reps.SetHostStr(alt_site_buffer);
-+        alt_site = new_site.ReplaceComponents(reps);
-+      } // */
++      // push the frame's content into ephemeral/partitioned storage IFF
++      // (a) it's not already a specially-isolated origin [not a public thing, but supported in Chrome and in its unit tests]
++      // (b) its site URL differs from the root frame's last committed site URL
++      // (c) its site URL has an HTTP[S] scheme (i.e., a real remote HTTP resource/document)
++      // (d) its host is not a raw IP address [because our decoration scheme is broken by IP address origins :-( ]
++      if (!is_isolated_origin && (new_site != root_site) && new_site.SchemeIsHTTPOrHTTPS() && !new_site.HostIsIPAddress()) {
++        // /*
++        // policy: isolation keyed to lifetime-of-root-document-instance
++        auto nav_token = root->GetNavigationToken();
++        if (nav_token.has_value()) {
++          GURL::Replacements reps;
++          std::string alt_site_buffer{"esp---"};
++          alt_site_buffer += nav_token.value().ToString();
++          alt_site_buffer += "---";
++          alt_site_buffer += new_site.host();
++          reps.SetHostStr(alt_site_buffer);
++          alt_site = new_site.ReplaceComponents(reps);
++        } // */
 +
-+      /*
-+      // policy: isolation keyed to hex-MD5-digest-of-root-site-URL
-+      {
-+        GURL::Replacements reps;
-+        std::string alt_site_buffer{"esp---"};
-+        alt_site_buffer += base::MD5String(root_site.spec());
-+        alt_site_buffer += "---";
-+        alt_site_buffer += new_site.host();
-+        reps.SetHostStr(alt_site_buffer);
-+        alt_site = new_site.ReplaceComponents(reps);
-+      } // */
-+
-+
-+      auto token = root->devtools_frame_token().ToString();
-+      auto* tmp1 = token.c_str();
-+      auto my_token = frame_tree_node_->devtools_frame_token().ToString();
-+      auto* tmp3 = my_token.c_str();
-+      auto url = request->GetURL().spec();
-+      auto* tmp2 = url.c_str();
-+      auto alt_site_str = alt_site.spec();
-+      auto* tmp4 = alt_site_str.c_str();
-+
-+      fprintf(stderr, "ESP: RenderFrameHostManager::GetFrameHostForNavigation(...); mainFrame=%s, myFrame=%s, navUrl='%s', state=%d, alt-site='%s'\n", tmp1, tmp3, tmp2, (int)request->state(), tmp4);
++        /*
++        // policy: isolation keyed to hex-MD5-digest-of-root-site-URL
++        {
++          GURL::Replacements reps;
++          std::string alt_site_buffer{"esp---"};
++          alt_site_buffer += base::MD5String(root_site.spec());
++          alt_site_buffer += "---";
++          alt_site_buffer += new_site.host();
++          reps.SetHostStr(alt_site_buffer);
++          alt_site = new_site.ReplaceComponents(reps);
++        } // */
++      }
 +    }
 +  }
 +
@@ -82,7 +72,7 @@ index 73050ff98a79..ec9c3602275a 100644
  
    // The SiteInstance determines whether to switch RenderFrameHost or not.
    bool use_current_rfh = current_site_instance == dest_site_instance;
-@@ -2401,7 +2471,8 @@ bool RenderFrameHostManager::InitRenderView(
+@@ -2390,7 +2450,8 @@ bool RenderFrameHostManager::InitRenderView(
  
  scoped_refptr<SiteInstance>
  RenderFrameHostManager::GetSiteInstanceForNavigationRequest(
@@ -92,7 +82,7 @@ index 73050ff98a79..ec9c3602275a 100644
    SiteInstance* current_site_instance = render_frame_host_->GetSiteInstance();
  
    // All children of MHTML documents must be MHTML documents. They all live in
-@@ -2472,8 +2543,9 @@ RenderFrameHostManager::GetSiteInstanceForNavigationRequest(
+@@ -2439,8 +2500,9 @@ RenderFrameHostManager::GetSiteInstanceForNavigationRequest(
    if (cross_origin_policy_swap)
      request->set_require_coop_browsing_instance_swap();
  

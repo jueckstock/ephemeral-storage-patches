@@ -1,8 +1,8 @@
 diff --git a/content/browser/site_instance_impl.cc b/content/browser/site_instance_impl.cc
-index 91ae83aaf6ad..ee595a8938b1 100644
+index c1eb23c23901..e647ef218a02 100644
 --- a/content/browser/site_instance_impl.cc
 +++ b/content/browser/site_instance_impl.cc
-@@ -798,6 +798,11 @@ GURL SiteInstanceImpl::GetSiteForURLInternal(
+@@ -790,6 +790,11 @@ GURL SiteInstanceImpl::GetSiteForURLInternal(
      const GURL& real_url,
      bool should_use_effective_urls,
      bool allow_default_site_url) {

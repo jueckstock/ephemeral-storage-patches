@@ -1,19 +1,20 @@
 diff --git a/chrome/browser/chrome_content_browser_client.cc b/chrome/browser/chrome_content_browser_client.cc
-index b4087b7737c2..1a96c9da95ea 100644
+index b5deda2a1739..c6ea8e4a2f2c 100644
 --- a/chrome/browser/chrome_content_browser_client.cc
 +++ b/chrome/browser/chrome_content_browser_client.cc
-@@ -1408,6 +1408,10 @@ std::string ChromeContentBrowserClient::GetStoragePartitionIdForSite(
+@@ -1327,6 +1327,11 @@ std::string ChromeContentBrowserClient::GetStoragePartitionIdForSite(
             extensions::util::SiteHasIsolatedStorage(site, browser_context))
      partition_id = site.spec();
  #endif
 +  // ESP: separate isolated sites from the default bucket for session state stuff
-+  else if (site.host().compare(0, 6, "esp---") == 0) {
++  else if (base::CommandLine::ForCurrentProcess()->HasSwitch("ephemeral-frame-storage")
++      && (site.host().compare(0, 6, "esp---") == 0)) {
 +    partition_id = site.spec();
 +  }
  
    DCHECK(IsValidStoragePartitionId(browser_context, partition_id));
    return partition_id;
-@@ -1430,11 +1434,19 @@ void ChromeContentBrowserClient::GetStoragePartitionConfigForSite(
+@@ -1349,11 +1354,20 @@ void ChromeContentBrowserClient::GetStoragePartitionConfigForSite(
      std::string* partition_domain,
      std::string* partition_name,
      bool* in_memory) {
@@ -24,7 +25,8 @@ index b4087b7737c2..1a96c9da95ea 100644
 -  *in_memory = false;
 +
 +  // ESP: i.f.f. the incoming site-URL has a "esp---{{GUID}}---" prefixed eTLD+1 hostname, create a custom partition
-+  if (site.host().compare(0, 6, "esp---") == 0) {
++  if (base::CommandLine::ForCurrentProcess()->HasSwitch("ephemeral-frame-storage")
++      && (site.host().compare(0, 6, "esp---") == 0)) {
 +    *partition_domain = "esp";
 +    *partition_name = site.spec();
 +    *in_memory = true;
@@ -38,3 +40,16 @@ index b4087b7737c2..1a96c9da95ea 100644
  
  #if BUILDFLAG(ENABLE_EXTENSIONS)
    bool success = extensions::WebViewGuest::GetGuestPartitionConfigForSite(
+@@ -4662,6 +4676,12 @@ bool ChromeContentBrowserClient::WillCreateRestrictedCookieManager(
+     return true;
+   }
+ #endif
++  // b3c: block 3rd party cookies by suppressing RestrictedCookieManagers
++  if (base::CommandLine::ForCurrentProcess()->HasSwitch("block-cross-cookies")) {
++    if (origin != top_frame_origin) {
++      return true;
++    }
++  }
+   return false;
+ }
+ 

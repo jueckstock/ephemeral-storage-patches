@@ -2,8 +2,9 @@
 
 PATCH_ROOT=$(dirname $0)
 
-for path in $(git status -uno -s | grep "^ M " | cut -c4-); do
-  NAME=$(echo "$path" | sed "s/\//-/g")
-  git diff "$path" > "$PATCH_ROOT/$NAME.patch"
+for patch in "$PATCH_ROOT"/*.patch; do
+	rawname=$(basename $patch)
+	cookedname=$(echo "${rawname%.patch}" | sed 's/-/\//g')
+	git diff "$cookedname" > "$patch"
 done
 cat .git/HEAD >"$PATCH_ROOT/chromium_commit.txt"

@@ -1,0 +1,33 @@
+diff --git a/services/network/url_loader_factory.cc b/services/network/url_loader_factory.cc
+index f17117db6f2a..f36d81f0b704 100644
+--- a/services/network/url_loader_factory.cc
++++ b/services/network/url_loader_factory.cc
+@@ -21,6 +21,7 @@
+ #include "services/network/url_loader.h"
+ #include "url/gurl.h"
+ #include "url/origin.h"
++#include "net/base/load_flags.h"
+ 
+ namespace network {
+ 
+@@ -100,6 +101,20 @@ void URLLoaderFactory::CreateLoaderAndStart(
+   // have been rejected at the CorsURLLoader layer.
+   DCHECK(!url_request.trusted_params || params_->is_trusted);
+ 
++  if (url_request.request_initiator && params_->top_frame_origin && base::CommandLine::ForCurrentProcess()->HasSwitch("block-cross-cookies")) {
++    auto tmp3 = params_->top_frame_origin->Serialize();
++    auto* tmp4 = tmp3.c_str();
++    auto tmp5 = url_request.request_initiator->Serialize();
++    auto* tmp6 = tmp5.c_str();
++
++    if (tmp3 != tmp5) {
++      auto tmp1 = url_request.url.spec();
++      auto* tmp2 = tmp1.c_str();
++      fprintf(stderr, "BCC: CreateLoaderAndStart(routing_id=%d, url='%s', top-origin='%s', request-initiator='%s')\n", routing_id, tmp2, tmp4, tmp6);
++      //const_cast<ResourceRequest *>(&url_request)->site_for_cookies = net::SiteForCookies();
++      const_cast<ResourceRequest *>(&url_request)->load_flags |= (net::LOAD_DO_NOT_SEND_COOKIES | net::LOAD_DO_NOT_SAVE_COOKIES);
++    }
++  }
+   std::string origin_string;
+   bool has_origin = url_request.headers.GetHeader("Origin", &origin_string) &&
+                     origin_string != "null";

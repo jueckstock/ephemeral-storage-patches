@@ -1,0 +1,14 @@
+diff --git a/services/network/public/mojom/network_service.mojom b/services/network/public/mojom/network_service.mojom
+index 4ed52a1fd6ed..766ee89e4c60 100644
+--- a/services/network/public/mojom/network_service.mojom
++++ b/services/network/public/mojom/network_service.mojom
+@@ -113,6 +113,9 @@ interface NetworkServiceClient {
+   // network.mojom.URLRequest.isolated_world_origin for more details.
+   // In practice, |isolated_world_origin| is the Chrome Extension ID.
+   LogCrossOriginFetchFromContentScript3(string isolated_world_hostname);
++
++  // ESP: ensure that any necessary SiteInstance/StoragePartitions are created for isolated contexts/requests
++  GetAltStorageKey(int32 process_id, int32 frame_id, url.mojom.Url url) => (string? isolation_key);
+ };
+ 
+ // Values for configuring HTTP authentication that can only be set once.

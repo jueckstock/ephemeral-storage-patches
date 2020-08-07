@@ -1,0 +1,14 @@
+diff --git a/services/network/public/mojom/network_context.mojom b/services/network/public/mojom/network_context.mojom
+index 9515fe92e0b1..b7cd0f4b64d8 100644
+--- a/services/network/public/mojom/network_context.mojom
++++ b/services/network/public/mojom/network_context.mojom
+@@ -436,6 +436,9 @@ struct NetworkContextParams {
+   // A reset throws out all existing cache content when loading the cache,
+   // effectively starting with an empty cache.
+   bool reset_http_cache_backend = false;
++
++  // ESP: slip in an optional unique key to identify isolated contexts for use by 3p requests
++  string? isolation_key;
+ };
+ 
+ struct NetworkConditions {

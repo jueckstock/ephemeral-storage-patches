@@ -1,0 +1,35 @@
+diff --git a/services/network/network_service.cc b/services/network/network_service.cc
+index 78475223c001..c286bb125c43 100644
+--- a/services/network/network_service.cc
++++ b/services/network/network_service.cc
+@@ -471,10 +471,17 @@ void NetworkService::CreateNetworkContext(
+   // to true.
+   DCHECK(!params->primary_network_context || network_contexts_.empty());
+ 
+-  owned_network_contexts_.emplace(std::make_unique<NetworkContext>(
++  // ESP: reshuffled to allow later reference to the created context
++  base::Optional<std::string> key = params->isolation_key;
++  auto item = owned_network_contexts_.emplace(std::make_unique<NetworkContext>(
+       this, std::move(receiver), std::move(params),
+       base::BindOnce(&NetworkService::OnNetworkContextConnectionClosed,
+                      base::Unretained(this))));
++
++  // ESP: check if this is an isolated context
++  if (key) {
++    isolated_context_map_[*key] = item.first->get();
++  }
+ }
+ 
+ void NetworkService::ConfigureStubHostResolver(
+@@ -784,6 +791,11 @@ void NetworkService::DestroyNetworkContexts() {
+ 
+ void NetworkService::OnNetworkContextConnectionClosed(
+     NetworkContext* network_context) {
++  // ESP: clean up isolated context mappings on connection loss
++  if (network_context->isolation_key()) {
++    isolated_context_map_.erase(*(network_context->isolation_key()));
++  }
++
+   if (network_context->IsPrimaryNetworkContext()) {
+     DestroyNetworkContexts();
+     return;

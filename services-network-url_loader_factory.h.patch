@@ -1,0 +1,21 @@
+diff --git a/services/network/url_loader_factory.h b/services/network/url_loader_factory.h
+index 1a6235850354..b870c60815f3 100644
+--- a/services/network/url_loader_factory.h
++++ b/services/network/url_loader_factory.h
+@@ -68,6 +68,16 @@ class URLLoaderFactory : public mojom::URLLoaderFactory {
+   static constexpr int kMaxTotalKeepaliveRequestSize = 512 * 1024;
+ 
+  private:
++  // ESP: internal helper to handle async-completion of CreateLoaderAndStart operations
++  void DoCreateLoaderAndStart(mojo::PendingReceiver<mojom::URLLoader> receiver,
++                            int32_t routing_id,
++                            int32_t request_id,
++                            uint32_t options,
++                            const ResourceRequest& url_request,
++                            mojo::PendingRemote<mojom::URLLoaderClient> client,
++                            const net::MutableNetworkTrafficAnnotationTag& traffic_annotation,
++                            const base::Optional<std::string>& isolation_key);
++
+   // The NetworkContext that indirectly owns |this|.
+   NetworkContext* const context_;
+   mojom::URLLoaderFactoryParamsPtr params_;

@@ -1,0 +1,62 @@
+diff --git a/content/browser/network_service_client.cc b/content/browser/network_service_client.cc
+index cb96c9e4d34d..4b02caf2c55d 100644
+--- a/content/browser/network_service_client.cc
++++ b/content/browser/network_service_client.cc
+@@ -33,6 +33,10 @@
+ #include "services/network/public/mojom/network_context.mojom.h"
+ #include "third_party/blink/public/mojom/web_feature/web_feature.mojom.h"
+ 
++// ESP needed stuff
++#include "content/public/browser/render_frame_host.h"
++#include "content/public/browser/storage_partition.h"
++
+ #if defined(OS_ANDROID)
+ #include "base/android/content_uri_utils.h"
+ #endif
+@@ -276,4 +280,46 @@ void NetworkServiceClient::LogCrossOriginFetchFromContentScript3(
+   }
+ }
+ 
++// ESP: ensure that any necessary SiteInstance/StoragePartitions are created for isolated contexts/requests
++void NetworkServiceClient::GetAltStorageKey(int process_id, int frame_id, const GURL& url, GetAltStorageKeyCallback callback) {
++  base::Optional<std::string> key;
++
++  // look up the RFH for the frame originating this request
++  auto* frame_host = content::RenderFrameHost::FromID(process_id, frame_id);
++  if (frame_host) {
++    // look up the frame-tree node for this frame
++    auto* frame_node = content::FrameTreeNode::GloballyFindByID(frame_host->GetFrameTreeNodeId());
++    if (frame_node) {
++      // look up the root-node (top level page/frame) and its current RFH
++      auto* root = frame_node->frame_tree()->root();
++      auto* root_rfh = root->current_frame_host();
++      if (root_rfh) {
++        auto* browser_context = root_rfh->GetSiteInstance()->GetBrowserContext();
++
++        // compute the isolation site URL (if any) for this request's URL vs. the root document
++        auto site_url = content::RenderFrameHostManager::ComputeIsolationSiteURL(
++            browser_context,
++            root_rfh->GetLastCommittedURL(),
++            url,
++            root->GetNavigationToken()->ToString());
++        if (site_url) {
++          // look up (possibly creating) the storage partition for the isolation site URL
++          auto* partition = content::BrowserContext::GetStoragePartitionForSite(browser_context, *site_url, true);
++          auto* nc = partition->GetNetworkContext();
++          fprintf(stderr, "don't optimize me, bro (%p)\n", nc);
++
++          /*auto tmp = url.spec();
++          auto* tmp2 = tmp.c_str();
++          auto tmp3 = partition->GetPath().value();
++          auto* tmp4 = tmp3.c_str();
++          fprintf(stderr, "ESP-DEBUG: [browser]GetAltStorageKey(%d, %d, '%s') => network context (%p) at path %s\n", process_id, frame_id, tmp2, (void *)nc, tmp4);
++          */
++          key = partition->GetPath().value();
++        }
++      }
++    }
++  }
++  std::move(callback).Run(key);
++}
++
+ }  // namespace content

@@ -1,0 +1,16 @@
+diff --git a/services/network/network_context.h b/services/network/network_context.h
+index 00f14ca8448b..df58117b89db 100644
+--- a/services/network/network_context.h
++++ b/services/network/network_context.h
+@@ -486,6 +486,11 @@ class COMPONENT_EXPORT(NETWORK_SERVICE) NetworkContext
+     return trust_token_store_.get();
+   }
+ 
++  // ESP: give access to the parameters for this context so we can look up its partition (if any)
++  const base::Optional<std::string>& isolation_key() const {
++    return params_->isolation_key;
++  }
++
+  private:
+   URLRequestContextOwner MakeURLRequestContext();
+ 

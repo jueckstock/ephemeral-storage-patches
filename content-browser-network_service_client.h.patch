@@ -1,0 +1,14 @@
+diff --git a/content/browser/network_service_client.h b/content/browser/network_service_client.h
+index c1d777cbca8f..a02857309c5c 100644
+--- a/content/browser/network_service_client.h
++++ b/content/browser/network_service_client.h
+@@ -111,6 +111,9 @@ class CONTENT_EXPORT NetworkServiceClient
+   void OnDNSChanged() override;
+ #endif
+ 
++  // ESP: ensure that any necessary SiteInstance/StoragePartitions are created for isolated contexts/requests
++  void GetAltStorageKey(int process_id, int frame_id, const GURL& url, GetAltStorageKeyCallback callback) override;
++
+  private:
+   mojo::Receiver<network::mojom::NetworkServiceClient> receiver_;
+ 

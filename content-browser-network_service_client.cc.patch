@@ -1,5 +1,5 @@
 diff --git a/content/browser/network_service_client.cc b/content/browser/network_service_client.cc
-index cb96c9e4d34d..4b02caf2c55d 100644
+index cb96c9e4d34d..f55a59c2c50f 100644
 --- a/content/browser/network_service_client.cc
 +++ b/content/browser/network_service_client.cc
 @@ -33,6 +33,10 @@
@@ -13,7 +13,7 @@ index cb96c9e4d34d..4b02caf2c55d 100644
  #if defined(OS_ANDROID)
  #include "base/android/content_uri_utils.h"
  #endif
-@@ -276,4 +280,46 @@ void NetworkServiceClient::LogCrossOriginFetchFromContentScript3(
+@@ -276,4 +280,42 @@ void NetworkServiceClient::LogCrossOriginFetchFromContentScript3(
    }
  }
  
@@ -42,15 +42,11 @@ index cb96c9e4d34d..4b02caf2c55d 100644
 +        if (site_url) {
 +          // look up (possibly creating) the storage partition for the isolation site URL
 +          auto* partition = content::BrowserContext::GetStoragePartitionForSite(browser_context, *site_url, true);
-+          auto* nc = partition->GetNetworkContext();
-+          fprintf(stderr, "don't optimize me, bro (%p)\n", nc);
 +
-+          /*auto tmp = url.spec();
-+          auto* tmp2 = tmp.c_str();
-+          auto tmp3 = partition->GetPath().value();
-+          auto* tmp4 = tmp3.c_str();
-+          fprintf(stderr, "ESP-DEBUG: [browser]GetAltStorageKey(%d, %d, '%s') => network context (%p) at path %s\n", process_id, frame_id, tmp2, (void *)nc, tmp4);
-+          */
++          // ignore return value; just get/make the partition
++          partition->GetNetworkContext();
++          
++          // return this partition's unique storage path as its isolation key
 +          key = partition->GetPath().value();
 +        }
 +      }

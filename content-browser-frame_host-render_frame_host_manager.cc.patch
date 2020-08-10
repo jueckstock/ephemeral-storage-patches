@@ -1,8 +1,8 @@
 diff --git a/content/browser/frame_host/render_frame_host_manager.cc b/content/browser/frame_host/render_frame_host_manager.cc
-index 4c370c23a221..dc09c4e45e90 100644
+index 4c370c23a221..c5f4ffd024a5 100644
 --- a/content/browser/frame_host/render_frame_host_manager.cc
 +++ b/content/browser/frame_host/render_frame_host_manager.cc
-@@ -783,6 +783,59 @@ void RenderFrameHostManager::DidCreateNavigationRequest(
+@@ -783,6 +783,52 @@ void RenderFrameHostManager::DidCreateNavigationRequest(
    }
  }
  
@@ -39,30 +39,23 @@ index 4c370c23a221..dc09c4e45e90 100644
 +  {
 +    GURL::Replacements reps;
 +    std::string alt_site_buffer{"esp---"};
-+    alt_site_buffer += isolation_key;
++    if (base::CommandLine::ForCurrentProcess()->HasSwitch("efs-top-origin")) {
++      alt_site_buffer += base::MD5String(root_site.spec());
++    } else {
++      alt_site_buffer += isolation_key;
++    }
 +    alt_site_buffer += "---";
 +    alt_site_buffer += new_site.host();
 +    reps.SetHostStr(alt_site_buffer);
 +    return base::make_optional(new_site.ReplaceComponents(reps));
 +  }
 +  return base::nullopt;
-+  /*
-+  // policy: isolation keyed to hex-MD5-digest-of-root-site-URL
-+  {
-+    GURL::Replacements reps;
-+    std::string alt_site_buffer{"esp---"};
-+    alt_site_buffer += base::MD5String(root_site.spec());
-+    alt_site_buffer += "---";
-+    alt_site_buffer += new_site.host();
-+    reps.SetHostStr(alt_site_buffer);
-+    alt_site = new_site.ReplaceComponents(reps);
-+  } // */
 +}
 +
  RenderFrameHostImpl* RenderFrameHostManager::GetFrameHostForNavigation(
      NavigationRequest* request) {
    DCHECK(!request->common_params().url.SchemeIs(url::kJavaScriptScheme))
-@@ -808,8 +861,33 @@ RenderFrameHostImpl* RenderFrameHostManager::GetFrameHostForNavigation(
+@@ -808,8 +854,33 @@ RenderFrameHostImpl* RenderFrameHostManager::GetFrameHostForNavigation(
    // First compute the SiteInstance to use for the navigation.
    SiteInstance* current_site_instance = render_frame_host_->GetSiteInstance();
    BrowserContext* browser_context = current_site_instance->GetBrowserContext();
@@ -97,7 +90,7 @@ index 4c370c23a221..dc09c4e45e90 100644
  
    // The SiteInstance determines whether to switch RenderFrameHost or not.
    bool use_current_rfh = current_site_instance == dest_site_instance;
-@@ -2390,7 +2468,8 @@ bool RenderFrameHostManager::InitRenderView(
+@@ -2390,7 +2461,8 @@ bool RenderFrameHostManager::InitRenderView(
  
  scoped_refptr<SiteInstance>
  RenderFrameHostManager::GetSiteInstanceForNavigationRequest(
@@ -107,7 +100,7 @@ index 4c370c23a221..dc09c4e45e90 100644
    SiteInstance* current_site_instance = render_frame_host_->GetSiteInstance();
  
    // All children of MHTML documents must be MHTML documents. They all live in
-@@ -2439,8 +2518,9 @@ RenderFrameHostManager::GetSiteInstanceForNavigationRequest(
+@@ -2439,8 +2511,9 @@ RenderFrameHostManager::GetSiteInstanceForNavigationRequest(
    if (cross_origin_policy_swap)
      request->set_require_coop_browsing_instance_swap();
  

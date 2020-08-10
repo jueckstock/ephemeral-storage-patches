@@ -1,5 +1,5 @@
 diff --git a/services/network/url_loader_factory.cc b/services/network/url_loader_factory.cc
-index f17117db6f2a..d4665f7a7f0e 100644
+index f17117db6f2a..c79f4dd85f0e 100644
 --- a/services/network/url_loader_factory.cc
 +++ b/services/network/url_loader_factory.cc
 @@ -21,6 +21,7 @@
@@ -10,31 +10,39 @@ index f17117db6f2a..d4665f7a7f0e 100644
  
  namespace network {
  
-@@ -100,6 +101,74 @@ void URLLoaderFactory::CreateLoaderAndStart(
+@@ -100,6 +101,69 @@ void URLLoaderFactory::CreateLoaderAndStart(
    // have been rejected at the CorsURLLoader layer.
    DCHECK(!url_request.trusted_params || params_->is_trusted);
  
-+  /*if (context_->isolation_key()) {
-+    auto* tmp = context_->isolation_key()->c_str();
-+    fprintf(stderr, "ESP-DEBUG: CreateLoaderAndStart(context-isolation-key=%s)\n", tmp);
-+  }*/
-+
 +  // ESP: ping the browser process with our process/frame/request-url context
 +  // to see if we should use an alternate, isolated network context for this request
-+  auto* nsc = context_->network_service()->client();
-+  nsc->GetAltStorageKey(
-+      params_->process_id, 
-+      url_request.render_frame_id, 
-+      url_request.url, 
-+      base::BindOnce(&URLLoaderFactory::DoCreateLoaderAndStart,
-+        base::Unretained(this), // safe because YOLO
++  if (context_->network_service() && base::CommandLine::ForCurrentProcess()->HasSwitch("ephemeral-frame-storage")) {
++    auto* nsc = context_->network_service()->client();
++    nsc->GetAltStorageKey(
++        params_->process_id, 
++        url_request.render_frame_id, 
++        url_request.url, 
++        base::BindOnce(&URLLoaderFactory::DoCreateLoaderAndStart,
++          base::Unretained(this), // safe because YOLO
++          std::move(receiver),
++          routing_id,
++          request_id,
++          options,
++          url_request,
++          std::move(client),
++          traffic_annotation));
++  } else {
++    // If the feature is not turned on, bypass the IPC call entirely
++    DoCreateLoaderAndStart(
 +        std::move(receiver),
 +        routing_id,
 +        request_id,
 +        options,
 +        url_request,
 +        std::move(client),
-+        traffic_annotation));
++        traffic_annotation,
++        base::nullopt);
++  }
 +}
 +
 +void URLLoaderFactory::DoCreateLoaderAndStart(
@@ -46,9 +54,6 @@ index f17117db6f2a..d4665f7a7f0e 100644
 +    mojo::PendingRemote<mojom::URLLoaderClient> client,
 +    const net::MutableNetworkTrafficAnnotationTag& traffic_annotation,
 +    const base::Optional<std::string>& isolation_key) {
-+  // Requests with |trusted_params| when params_->is_trusted is not set should
-+  // have been rejected at the CorsURLLoader layer.
-+  DCHECK(!url_request.trusted_params || params_->is_trusted);
 +
 +  // ESP: if we got an isolation key, look up that network context and use _it_
 +  auto* context = context_;
@@ -64,28 +69,18 @@ index f17117db6f2a..d4665f7a7f0e 100644
 +
 +  // ESP: implement optional 3p-cookies-only blocking
 +  if (params_->top_frame_origin && base::CommandLine::ForCurrentProcess()->HasSwitch("block-cross-cookies")) {
-+    /*auto tmp3 = params_->top_frame_origin->Serialize();
-+    auto* tmp4 = tmp3.c_str();
-+    auto tmp5 = url_request.request_initiator->Serialize();
-+    auto* tmp6 = tmp5.c_str();
-+
-+    if (tmp3 != tmp5) {
-+      auto tmp1 = url_request.url.spec();
-+      auto* tmp2 = tmp1.c_str();
-+      fprintf(stderr, "BCC: CreateLoaderAndStart(routing_id=%d, url='%s', top-origin='%s', request-initiator='%s')\n", routing_id, tmp2, tmp4, tmp6);
-+      //const_cast<ResourceRequest *>(&url_request)->site_for_cookies = net::SiteForCookies();
-+      const_cast<ResourceRequest *>(&url_request)->load_flags |= (net::LOAD_DO_NOT_SEND_COOKIES | net::LOAD_DO_NOT_SAVE_COOKIES);
-+    }*/
 +    auto request_origin = url::Origin::Create(url_request.url);
 +    if (request_origin != params_->top_frame_origin) {
 +      const_cast<ResourceRequest *>(&url_request)->load_flags |= (net::LOAD_DO_NOT_SEND_COOKIES | net::LOAD_DO_NOT_SAVE_COOKIES);
 +    }
 +  }
 +
++  // ESP: rest of code originally lived in CreateLoaderAndStart...
++
    std::string origin_string;
    bool has_origin = url_request.headers.GetHeader("Origin", &origin_string) &&
                      origin_string != "null";
-@@ -116,17 +185,17 @@ void URLLoaderFactory::CreateLoaderAndStart(
+@@ -116,17 +180,17 @@ void URLLoaderFactory::CreateLoaderAndStart(
    mojom::NetworkServiceClient* network_service_client = nullptr;
    base::WeakPtr<KeepaliveStatisticsRecorder> keepalive_statistics_recorder;
    base::WeakPtr<NetworkUsageAccumulator> network_usage_accumulator;
@@ -108,7 +103,7 @@ index f17117db6f2a..d4665f7a7f0e 100644
      exhausted = true;
    }
  
-@@ -154,7 +223,7 @@ void URLLoaderFactory::CreateLoaderAndStart(
+@@ -154,7 +218,7 @@ void URLLoaderFactory::CreateLoaderAndStart(
      const auto& top_frame_id = *params_->top_frame_id;
      const auto& recorder = *keepalive_statistics_recorder;
  
@@ -117,7 +112,7 @@ index f17117db6f2a..d4665f7a7f0e 100644
        // We already checked this, but we have this here for histogram.
        DCHECK(exhausted);
        block_status = KeepaliveBlockStatus::kBlockedDueToCanCreateLoader;
-@@ -198,8 +267,8 @@ void URLLoaderFactory::CreateLoaderAndStart(
+@@ -198,8 +262,8 @@ void URLLoaderFactory::CreateLoaderAndStart(
    }
  
    auto loader = std::make_unique<URLLoader>(
@@ -128,7 +123,7 @@ index f17117db6f2a..d4665f7a7f0e 100644
        base::BindOnce(&cors::CorsURLLoaderFactory::DestroyURLLoader,
                       base::Unretained(cors_url_loader_factory_)),
        std::move(receiver), options, url_request, std::move(client),
-@@ -209,7 +278,7 @@ void URLLoaderFactory::CreateLoaderAndStart(
+@@ -209,7 +273,7 @@ void URLLoaderFactory::CreateLoaderAndStart(
        std::move(keepalive_statistics_recorder),
        std::move(network_usage_accumulator),
        header_client_.is_bound() ? header_client_.get() : nullptr,

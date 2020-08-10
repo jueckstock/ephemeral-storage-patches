@@ -1,5 +1,5 @@
 diff --git a/chrome/browser/chrome_content_browser_client.cc b/chrome/browser/chrome_content_browser_client.cc
-index b5deda2a1739..c6ea8e4a2f2c 100644
+index b5deda2a1739..d525575dd07c 100644
 --- a/chrome/browser/chrome_content_browser_client.cc
 +++ b/chrome/browser/chrome_content_browser_client.cc
 @@ -1327,6 +1327,11 @@ std::string ChromeContentBrowserClient::GetStoragePartitionIdForSite(
@@ -14,7 +14,7 @@ index b5deda2a1739..c6ea8e4a2f2c 100644
  
    DCHECK(IsValidStoragePartitionId(browser_context, partition_id));
    return partition_id;
-@@ -1349,11 +1354,20 @@ void ChromeContentBrowserClient::GetStoragePartitionConfigForSite(
+@@ -1349,11 +1354,21 @@ void ChromeContentBrowserClient::GetStoragePartitionConfigForSite(
      std::string* partition_domain,
      std::string* partition_name,
      bool* in_memory) {
@@ -25,11 +25,12 @@ index b5deda2a1739..c6ea8e4a2f2c 100644
 -  *in_memory = false;
 +
 +  // ESP: i.f.f. the incoming site-URL has a "esp---{{GUID}}---" prefixed eTLD+1 hostname, create a custom partition
-+  if (base::CommandLine::ForCurrentProcess()->HasSwitch("ephemeral-frame-storage")
++  auto* cli = base::CommandLine::ForCurrentProcess();
++  if (cli->HasSwitch("ephemeral-frame-storage")
 +      && (site.host().compare(0, 6, "esp---") == 0)) {
 +    *partition_domain = "esp";
 +    *partition_name = site.spec();
-+    *in_memory = true;
++    *in_memory = !cli->HasSwitch("efs-persist"); // allow turning on persistence
 +  } else {
 +    // Default to the browser-wide storage partition and override based on |site|
 +    // below.
@@ -40,7 +41,7 @@ index b5deda2a1739..c6ea8e4a2f2c 100644
  
  #if BUILDFLAG(ENABLE_EXTENSIONS)
    bool success = extensions::WebViewGuest::GetGuestPartitionConfigForSite(
-@@ -4662,6 +4676,12 @@ bool ChromeContentBrowserClient::WillCreateRestrictedCookieManager(
+@@ -4662,6 +4677,12 @@ bool ChromeContentBrowserClient::WillCreateRestrictedCookieManager(
      return true;
    }
  #endif

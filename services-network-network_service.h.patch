@@ -1,0 +1,27 @@
+diff --git a/services/network/network_service.h b/services/network/network_service.h
+index 0d5ffd872c5b..7e27bb5dc1ce 100644
+--- a/services/network/network_service.h
++++ b/services/network/network_service.h
+@@ -246,6 +246,12 @@ class COMPONENT_EXPORT(NETWORK_SERVICE) NetworkService
+ 
+   static NetworkService* GetNetworkServiceForTesting();
+ 
++  // ESP: enable lookup of an isolated network context by isolation key
++  NetworkContext* LookupIsolatedNetworkContext(const std::string& isolation_key) {
++    auto iter = isolated_context_map_.find(isolation_key);
++    return (iter == isolated_context_map_.end()) ? nullptr : iter->second;
++  }
++
+  private:
+   class DelayedDohProbeActivator;
+ 
+@@ -367,6 +373,9 @@ class COMPONENT_EXPORT(NETWORK_SERVICE) NetworkService
+   // requests should have their initiator origin within the set stored here).
+   std::map<int, std::set<url::Origin>> plugin_origins_;
+ 
++  // ESP: map from isolation key to non-owned NetworkContext (assumed owned in owned_network_contexts_)
++  std::map<std::string, NetworkContext*> isolated_context_map_;
++
+   DISALLOW_COPY_AND_ASSIGN(NetworkService);
+ };
+ 

@@ -1,0 +1,16 @@
+diff --git a/chrome/browser/net/profile_network_context_service.cc b/chrome/browser/net/profile_network_context_service.cc
+index 44ce8ba980a6..ba83f8990962 100644
+--- a/chrome/browser/net/profile_network_context_service.cc
++++ b/chrome/browser/net/profile_network_context_service.cc
+@@ -642,6 +642,11 @@ ProfileNetworkContextService::CreateNetworkContextParams(
+   network::mojom::NetworkContextParamsPtr network_context_params =
+       g_browser_process->system_network_context_manager()
+           ->CreateDefaultNetworkContextParams();
++  
++  // ESP: pass along our isolation key if it's non-empty
++  if (!relative_partition_path.value().empty()) {
++    network_context_params->isolation_key = path.value();
++  }
+ 
+   network_context_params->context_name = std::string("main");
+ 

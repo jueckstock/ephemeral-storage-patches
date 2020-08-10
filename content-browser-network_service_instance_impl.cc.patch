@@ -1,0 +1,26 @@
+diff --git a/content/browser/network_service_instance_impl.cc b/content/browser/network_service_instance_impl.cc
+index e449c6531a21..998fcb681fdb 100644
+--- a/content/browser/network_service_instance_impl.cc
++++ b/content/browser/network_service_instance_impl.cc
+@@ -260,11 +260,21 @@ network::mojom::NetworkService* GetNetworkService() {
+         } else {
+           if (service_was_bound)
+             LOG(ERROR) << "Network service crashed, restarting service.";
++	  
++	  // ESP: pass on our special CLI arguments to the child process if needed
++	  std::vector<std::string> extra_args;
++	  auto* browser_cli = base::CommandLine::ForCurrentProcess();
++	  if (browser_cli->HasSwitch("ephemeral-frame-storage"))
++	    extra_args.emplace_back("ephemeral-frame-storage");
++	  if (browser_cli->HasSwitch("block-cross-cookies"))
++	    extra_args.emplace_back("block-cross-cookies");
++
+           ServiceProcessHost::Launch(
+               std::move(receiver),
+               ServiceProcessHost::Options()
+                   .WithSandboxType(service_manager::SandboxType::kNetwork)
+                   .WithDisplayName(base::UTF8ToUTF16("Network Service"))
++		  .WithExtraCommandLineSwitches(std::move(extra_args))
+                   .Pass());
+         }
+       } else {

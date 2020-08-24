@@ -1,5 +1,5 @@
 diff --git a/services/network/url_loader_factory.cc b/services/network/url_loader_factory.cc
-index f17117db6f2a..c79f4dd85f0e 100644
+index f17117db6f2a..5c482493ec5c 100644
 --- a/services/network/url_loader_factory.cc
 +++ b/services/network/url_loader_factory.cc
 @@ -21,6 +21,7 @@
@@ -71,7 +71,7 @@ index f17117db6f2a..c79f4dd85f0e 100644
 +  if (params_->top_frame_origin && base::CommandLine::ForCurrentProcess()->HasSwitch("block-cross-cookies")) {
 +    auto request_origin = url::Origin::Create(url_request.url);
 +    if (request_origin != params_->top_frame_origin) {
-+      const_cast<ResourceRequest *>(&url_request)->load_flags |= (net::LOAD_DO_NOT_SEND_COOKIES | net::LOAD_DO_NOT_SAVE_COOKIES);
++      const_cast<ResourceRequest *>(&url_request)->load_flags |= (net::LOAD_DO_NOT_SEND_COOKIES | net::LOAD_DO_NOT_SAVE_COOKIES | net::LOAD_DO_NOT_SEND_AUTH_DATA);
 +    }
 +  }
 +

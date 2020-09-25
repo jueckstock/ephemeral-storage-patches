@@ -1,0 +1,52 @@
+diff --git a/chromium_src/components/content_settings/core/common/cookie_settings_base.cc b/chromium_src/components/content_settings/core/common/cookie_settings_base.cc
+index c348bdeacb..3c79f2d313 100644
+--- a/chromium_src/components/content_settings/core/common/cookie_settings_base.cc
++++ b/chromium_src/components/content_settings/core/common/cookie_settings_base.cc
+@@ -15,17 +15,19 @@
+ 
+ namespace content_settings {
+ 
++// EFS: disable these compatibility hacks for breakage testing
++/*
+ namespace {
+ 
+-constexpr char kWp[] = "https://[*.]wp.com/*";
+-constexpr char kWordpress[] = "https://[*.]wordpress.com/*";
+-constexpr char kPlaystation[] = "https://[*.]playstation.com/*";
++constexpr char kWp[] = "https://[*.]wp.com/ *";
++constexpr char kWordpress[] = "https://[*.]wordpress.com/ *";
++constexpr char kPlaystation[] = "https://[*.]playstation.com/ *";
+ constexpr char kSonyentertainmentnetwork[] =
+-    "https://[*.]sonyentertainmentnetwork.com/*";
+-constexpr char kUbisoft[] = "https://[*.]ubisoft.com/*";
+-constexpr char kUbi[] = "https://[*.]ubi.com/*";
+-constexpr char kAmericanexpress[] = "https://[*.]americanexpress.com/*";
+-constexpr char kAexp[] = "https://[*.]aexp-static.com/*";
++    "https://[*.]sonyentertainmentnetwork.com/ *";
++constexpr char kUbisoft[] = "https://[*.]ubisoft.com/ *";
++constexpr char kUbi[] = "https://[*.]ubi.com/ *";
++constexpr char kAmericanexpress[] = "https://[*.]americanexpress.com/ *";
++constexpr char kAexp[] = "https://[*.]aexp-static.com/ *";
+ 
+ bool BraveIsAllowedThirdParty(
+     const GURL& url,
+@@ -93,6 +95,7 @@ bool BraveIsAllowedThirdParty(
+ }
+ 
+ }  // namespace
++*/
+ 
+ bool CookieSettingsBase::IsCookieAccessAllowed(
+     const GURL& url, const GURL& first_party_url) const {
+@@ -114,8 +117,9 @@ bool CookieSettingsBase::IsCookieAccessAllowed(
+   if (!IsAllowed(setting))
+     return false;
+ 
+-  if (BraveIsAllowedThirdParty(url, site_for_cookies, top_frame_origin))
+-    return true;
++  // EFS: disable these compatibility hacks for breakage-testing
++  //if (BraveIsAllowedThirdParty(url, site_for_cookies, top_frame_origin))
++  //  return true;
+ 
+   return IsChromiumCookieAccessAllowed(url, site_for_cookies, top_frame_origin);
+ }

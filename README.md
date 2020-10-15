@@ -4,7 +4,7 @@
 
 Patches to Chromium 83/Brave 1.12.48 to implement a [proposed storage policy](https://github.com/privacycg/proposals/issues/18).
 
-Known to build when applied to chromium commit AAAA (for use with building brave-core commit BBBBB).
+Known to build when applied to chromium commit `faf34a95a93ff46eb36000dab45cf66e58048b0f` (for use with building brave-core commit `cd7b03a17000114d25a6b8f5971ee6817ef6ad7d`, or brave-core branch `page-graph`).
 
 # Usage
 
